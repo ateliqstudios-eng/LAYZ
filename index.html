@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Laylaa's Quiz Night</title>
+<style>
+:root{--bg:#f5f2ec;--ink:#1f1d1a;--mute:#75706a;--line:#ddd7cc;--card:#fffdf9;--acc:#2f5d50;--c0:#b5523b;--c1:#3d5a80;--c2:#c79a3b;--c3:#4a7c59}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%}
+body{background:var(--bg);color:var(--ink);font:16px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;display:flex;flex-direction:column;min-height:100vh}
+main{flex:1;width:100%;max-width:920px;margin:0 auto;padding:36px 20px 24px;display:flex;flex-direction:column;gap:20px}
+main.mid{justify-content:center}
+footer{padding:16px 20px;text-align:center;font-size:.85rem;color:var(--mute);border-top:1px solid var(--line)}
+footer a{color:var(--mute);margin-left:14px;cursor:pointer;text-decoration:underline}
+h1,h2{font-family:Georgia,"Times New Roman",serif;font-weight:400;margin:0;letter-spacing:-.01em}
+h1{font-size:clamp(2.6rem,9vw,4.6rem);line-height:1.05}
+h2{font-size:1.6rem}
+.eyebrow{font-size:.78rem;letter-spacing:.18em;text-transform:uppercase;color:var(--acc);font-weight:600}
+.lead{color:var(--mute);font-size:1.1rem;margin:0;max-width:36ch}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:22px}
+.btn{font:inherit;font-weight:600;background:var(--ink);color:var(--bg);border:1px solid var(--ink);border-radius:8px;padding:11px 22px;cursor:pointer;transition:opacity .15s}
+.btn:hover{opacity:.85}
+.btn.g{background:transparent;color:var(--ink);border-color:var(--line)}
+.btn.g:hover{border-color:var(--ink);opacity:1}
+.btn.s{padding:6px 12px;font-size:.85rem}
+.btn.a{background:var(--acc);border-color:var(--acc);color:#fff}
+input,select{font:inherit;width:100%;padding:11px 13px;border:1px solid var(--line);border-radius:8px;background:#fff;color:var(--ink);margin-top:6px}
+input:focus,select:focus{outline:2px solid var(--acc);outline-offset:-1px;border-color:var(--acc)}
+label{font-size:.85rem;color:var(--mute);display:block;margin-top:12px}
+.row{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.grp{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.q{font-family:Georgia,serif;font-size:clamp(1.7rem,4.6vw,2.8rem);line-height:1.25;text-align:center;padding:26px 8px}
+.opt{background:var(--card);border:1px solid var(--line);border-left:8px solid var(--k);border-radius:10px;padding:16px;font-size:1.2rem;font-weight:600;display:flex;gap:14px;align-items:center;min-height:72px}
+.opt b{color:var(--k);font-size:1.3rem}
+.opt.on{background:#e7f0ea;border-color:var(--c3)}
+.opt.off{opacity:.4}
+.tm{font-family:Georgia,serif;font-size:2.4rem;min-width:90px}
+.meta{font-size:.9rem;color:var(--mute)}
+.ansbox{background:#e7f0ea;border:1px solid var(--c3);border-radius:10px;padding:16px 20px;font-size:1.3rem;text-align:center}
+.pl{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.pl:last-child{border:0}
+.nm{font-size:1.15rem;font-weight:600;flex:1;min-width:110px}
+.sc{font-family:Georgia,serif;font-size:1.7rem;min-width:70px;text-align:right}
+.big{font-family:Georgia,serif;font-size:2.4rem;line-height:1.1}
+.rk{display:flex;align-items:baseline;gap:16px;padding:14px 0;border-bottom:1px solid var(--line)}
+.rk:last-child{border:0}
+.rk i{font-style:normal;font-family:Georgia,serif;width:40px;color:var(--mute);font-size:1.4rem}
+.rk .nm{font-size:1.4rem}
+.rk.t1 .nm,.rk.t1 .sc{font-size:2.2rem;color:var(--acc)}
+.bad{color:var(--c0)}
+#msg{position:fixed;top:16px;left:50%;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 18px;border-radius:8px;font-size:.9rem;display:none;z-index:9}
+@media(max-width:560px){.grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div id="msg"></div>
+<main id="app"></main>
+<footer>Made by Laylaa Khan<a id="al">Edit questions</a></footer>
+<input type="file" id="imp" accept=".json" hidden>
+<script>
+const K='laylaa-quiz-v2',GK='laylaa-night-game';
+const DEF={pw:'laylaa',q:[
+{q:'Which planet is known as the Red Planet?',o:['Venus','Mars','Jupiter','Mercury'],c:1,a:'',t:20,p:100},
+{q:'Name the largest ocean on Earth.',o:[],c:-1,a:'The Pacific Ocean',t:30,p:100},
+{q:'Which city is home to Table Mountain?',o:['Durban','Johannesburg','Cape Town','Pretoria'],c:2,a:'',t:20,p:100},
+{q:'What is 12 × 12?',o:[],c:-1,a:'144',t:20,p:100}]};
+const load=(k,d)=>{try{return JSON.parse(localStorage.getItem(k))||d}catch(e){return d}};
+let D=load(K,DEF),G=load(GK,{p:[],i:0});
+const sv=()=>{try{localStorage.setItem(K,JSON.stringify(D));localStorage.setItem(GK,JSON.stringify(G))}catch(e){msg('Could not save on this browser')}};
+const $=s=>document.querySelector(s),app=$('#app');
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const L='ABCD';let S={v:'home',rev:false,tl:0,run:false,ed:-1};
+function msg(t){const m=$('#msg');m.textContent=t;m.style.display='block';clearTimeout(msg.t);msg.t=setTimeout(()=>m.style.display='none',3000)}
+const fmt=ms=>{const s=Math.ceil(ms/1000);return Math.floor(s/60)+':'+String(s%60).padStart(2,'0')};
+const cur=()=>D.q[G.i];
+function resetT(){clearInterval(S.iv);S.run=false;S.tl=((cur()||{}).t||0)*1000}
+function beep(){try{const a=new AudioContext(),o=a.createOscillator();o.frequency.value=660;o.connect(a.destination);o.start();o.stop(a.currentTime+.5)}catch(e){}}
+function tmShow(){const e=$('#tm');if(e)e.textContent=fmt(S.tl)}
+function r(){
+  const v=S.v;let h='';app.className=(v=='home'||v=='login')?'mid':'';
+  if(v=='home')h=`<div class="eyebrow">Made by Laylaa Khan</div><h1>Laylaa's Quiz Night</h1><p class="lead">Questions on the screen, answers on paper, and Laylaa keeps the score.</p><div class="grp"><button class="btn" data-a="start">Start the game</button><button class="btn g" data-a="board">Leaderboard</button></div><div class="meta">${D.q.length} question${D.q.length==1?'':'s'} ready · ${G.p.length} player${G.p.length==1?'':'s'}</div>`;
+  else if(v=='play'){
+    const q=cur();
+    if(!q){app.innerHTML=`<h2>No questions yet</h2><p class="lead">Add some from "Edit questions" at the bottom of the page.</p><div><button class="btn g" data-a="home">Back</button></div>`;return}
+    const n=q.p;
+    h=`<div class="row"><span class="meta">Question ${G.i+1} of ${D.q.length} · worth ${n} pts</span><span class="grp"><button class="btn g s" data-a="prev">← Previous</button><button class="btn g s" data-a="next">Next →</button><button class="btn g s" data-a="board">Leaderboard</button><button class="btn g s" data-a="home">Home</button></span></div>
+<div class="card"><div class="q">${esc(q.q)}</div>${q.o.length?`<div class="grid">${q.o.map((o,k)=>`<div class="opt ${S.rev&&q.c>=0?(k==q.c?'on':'off'):''}" style="--k:var(--c${k})"><b>${L[k]}</b>${esc(o)}</div>`).join('')}</div>`:''}</div>
+<div class="row">${q.t>0?`<span class="grp"><span class="tm ${S.tl<=0?'bad':''}" id="tm">${fmt(S.tl)}</span><button class="btn g" data-a="tog">${S.run?'Pause':S.tl<=0?'Restart timer':S.tl<q.t*1000?'Resume':'Start timer'}</button></span>`:'<span></span>'}<button class="btn a" data-a="rev">${S.rev?'Hide answer':'Show answer'}</button></div>
+${S.rev?`<div class="ansbox"><span class="meta">Answer</span><br><b>${esc(q.c>=0?L[q.c]+' — '+q.o[q.c]:q.a)}</b></div>`:''}
+<div class="card"><div class="row" style="margin-bottom:6px"><b>Players &amp; points</b><span class="grp"><input id="pn" placeholder="Add a player" maxlength="24" style="width:180px;margin:0"><button class="btn s" data-a="padd">Add</button></span></div>
+${G.p.map((p,k)=>`<div class="pl"><span class="nm">${esc(p.n)}</span><span class="sc">${p.s}</span><span class="grp"><button class="btn g s" data-a="sub" data-k="${k}">− ${n}</button><button class="btn a s" data-a="addp" data-k="${k}">+ ${n}</button><button class="btn g s" data-a="set" data-k="${k}">Custom</button><button class="btn g s" data-a="prm" data-k="${k}" title="Remove player">✕</button></span></div>`).join('')||'<p class="meta">Add everyone who is playing, then award points after each question.</p>'}</div>`}
+  else if(v=='board'){const s=G.p.map(p=>p).sort((a,b)=>b.s-a.s);let rk=0,last=null;
+    h=`<div class="row"><h2>Leaderboard</h2><span class="grp"><button class="btn g s" data-a="start">Back to game</button><button class="btn g s" data-a="home">Home</button></span></div><div class="card">${s.map((p,i)=>{if(p.s!==last){rk=i+1;last=p.s}return`<div class="rk ${rk==1?'t1':''}"><i>${rk}</i><span class="nm">${esc(p.n)}</span><span class="sc">${p.s}</span></div>`}).join('')||'<p class="meta">No players yet.</p>'}</div><div class="grp"><button class="btn g s" data-a="rsc">Reset all scores</button><button class="btn g s" data-a="cpl">Clear players</button></div>`}
+  else if(v=='login')h=`<h2>Edit questions</h2><div class="card"><label style="margin:0">Passcode</label><input id="pw" type="password" autofocus><div class="row" style="margin-top:16px"><button class="btn g" data-a="home">Back</button><button class="btn" data-a="login">Enter</button></div></div>`;
+  else if(v=='admin'){const e=S.ed>=0?D.q[S.ed]:{q:'',o:[],c:-1,a:'',t:20,p:100},o=[0,1,2,3].map(k=>e.o[k]||'');
+    h=`<div class="row"><h2>Questions</h2><button class="btn g s" data-a="home">Done</button></div>
+<div class="card"><b>${S.ed>=0?'Edit question '+(S.ed+1):'Add a question'}</b><label>Question</label><input id="qt" value="${esc(e.q)}">
+<label>Answer options (optional — leave blank for a written-answer question)</label><div class="grid">${o.map((x,k)=>`<input id="o${k}" placeholder="Option ${L[k]}" value="${esc(x)}">`).join('')}</div>
+<div class="grid"><div><label>Correct option</label><select id="cc"><option value="-1">None (open answer)</option>${[0,1,2,3].map(k=>`<option value="${k}" ${k==e.c?'selected':''}>Option ${L[k]}</option>`).join('')}</select></div><div><label>Answer text (for open answers)</label><input id="aa" value="${esc(e.a||'')}"></div></div>
+<div class="grid"><div><label>Timer in seconds (0 = no timer)</label><select id="tt">${[0,10,15,20,30,45,60,90,120].map(k=>`<option ${k==e.t?'selected':''}>${k}</option>`).join('')}</select></div><div><label>Points it's worth</label><input id="pp" type="number" min="0" value="${e.p}"></div></div>
+<div class="row" style="margin-top:16px"><span></span><span class="grp">${S.ed>=0?'<button class="btn g s" data-a="cancel">Cancel</button>':''}<button class="btn a" data-a="add">${S.ed>=0?'Save changes':'Add question'}</button></span></div></div>
+<div class="card"><b>All questions (${D.q.length})</b>${D.q.map((x,k)=>`<div class="pl"><span style="flex:1;min-width:200px">${k+1}. ${esc(x.q)}<br><span class="meta">${x.o.length?x.o.length+' options · ':'Open answer · '}${x.t?x.t+'s':'no timer'} · ${x.p} pts</span></span><span class="grp"><button class="btn g s" data-a="up" data-k="${k}">↑</button><button class="btn g s" data-a="dn" data-k="${k}">↓</button><button class="btn g s" data-a="edit" data-k="${k}">Edit</button><button class="btn g s" data-a="del" data-k="${k}">Delete</button></span></div>`).join('')||'<p class="meta">No questions yet.</p>'}</div>
+<div class="card"><b>Settings</b><label>Change passcode</label><input id="np" placeholder="New passcode"><div class="grp" style="margin-top:14px"><button class="btn g s" data-a="cpw">Save passcode</button><button class="btn g s" data-a="exp">Back up questions</button><button class="btn g s" data-a="imp">Restore backup</button></div></div>`}
+  app.innerHTML=h;
+}
+function go(d){G.i=Math.max(0,Math.min(D.q.length-1,G.i+d));S.rev=false;resetT();sv();r()}
+const act={
+  home(){clearInterval(S.iv);S.run=false;S.v='home';r()},
+  start(){S.v='play';G.i=Math.min(G.i,Math.max(0,D.q.length-1));S.rev=false;resetT();r()},
+  board(){clearInterval(S.iv);S.run=false;S.v='board';r()},
+  prev(){go(-1)},next(){go(1)},
+  rev(){S.rev=!S.rev;r()},
+  tog(){const q=cur();if(S.run){clearInterval(S.iv);S.run=false;r();return}
+    if(S.tl<=0)S.tl=q.t*1000;S.run=true;S.last=Date.now();
+    S.iv=setInterval(()=>{const t=Date.now();S.tl-=t-S.last;S.last=t;if(S.tl<=0){S.tl=0;clearInterval(S.iv);S.run=false;beep();r()}else tmShow()},100);r()},
+  padd(){const n=($('#pn').value||'').trim();if(!n)return msg('Type a name first');G.p.push({n,s:0});sv();r();$('#pn').focus()},
+  sub(k){G.p[+k].s-=cur().p;sv();r()},
+  addp(k){G.p[+k].s+=cur().p;sv();r()},
+  set(k){const p=G.p[+k],x=prompt('Add or remove points for '+p.n+' (e.g. 50 or -25):','0');if(x===null)return;const n=parseInt(x,10);if(isNaN(n))return msg('Enter a number');p.s+=n;sv();r()},
+  prm(k){if(confirm('Remove '+G.p[+k].n+'?')){G.p.splice(+k,1);sv();r()}},
+  rsc(){if(confirm('Set every score back to 0?')){G.p.forEach(p=>p.s=0);sv();r()}},
+  cpl(){if(confirm('Remove all players?')){G.p=[];sv();r()}},
+  adm(){S.v='login';r()},
+  login(){if($('#pw').value===D.pw){S.v='admin';S.ed=-1;r()}else msg('Wrong passcode')},
+  add(){
+    const q=$('#qt').value.trim(),raw=[0,1,2,3].map(k=>$('#o'+k).value.trim()),c=+$('#cc').value,a=$('#aa').value.trim(),f=raw.filter(Boolean).length;
+    if(!q)return msg('Write the question first');
+    if(f==1)return msg('Use at least 2 options, or none');
+    if(c>=0&&!raw[c])return msg('The correct option cannot be empty');
+    if(c<0&&!a)return msg('Type the answer text');
+    const item={q,o:raw.filter(Boolean),c:c>=0?raw.slice(0,c).filter(Boolean).length:-1,a:c>=0?'':a,t:+$('#tt').value,p:Math.max(0,parseInt($('#pp').value,10)||0)};
+    if(S.ed>=0)D.q[S.ed]=item;else D.q.push(item);
+    sv();S.ed=-1;r();msg('Saved')},
+  edit(k){S.ed=+k;r();window.scrollTo(0,0)},
+  cancel(){S.ed=-1;r()},
+  del(k){if(confirm('Delete this question?')){D.q.splice(+k,1);G.i=Math.min(G.i,Math.max(0,D.q.length-1));sv();S.ed=-1;r()}},
+  up(k){k=+k;if(k>0){[D.q[k-1],D.q[k]]=[D.q[k],D.q[k-1]];sv();r()}},
+  dn(k){k=+k;if(k<D.q.length-1){[D.q[k+1],D.q[k]]=[D.q[k],D.q[k+1]];sv();r()}},
+  cpw(){const p=$('#np').value.trim();if(!p)return msg('Type a new passcode');D.pw=p;sv();msg('Passcode updated')},
+  exp(){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(D,null,2)],{type:'application/json'}));a.download='laylaa-quiz-backup.json';a.click()},
+  imp(){$('#imp').click()}
+};
+$('#imp').addEventListener('change',e=>{const f=e.target.files[0];if(!f)return;const fr=new FileReader();
+  fr.onload=()=>{try{const j=JSON.parse(fr.result);if(!Array.isArray(j.q))throw 0;
+    D={pw:j.pw||D.pw,q:j.q.map(x=>({q:String(x.q),o:x.o||[],c:x.c==null?-1:x.c,a:x.a||'',t:x.t==null?20:x.t,p:x.p==null?100:x.p}))};
+    G.i=0;sv();r();msg('Backup restored')}catch(x){msg('That file is not a valid backup')}};
+  fr.readAsText(f);e.target.value=''});
+app.addEventListener('click',e=>{const b=e.target.closest('[data-a]');if(b)act[b.dataset.a](b.dataset.k)});
+$('#al').addEventListener('click',act.adm);
+document.addEventListener('keydown',e=>{
+  if(e.target.tagName=='INPUT'||e.target.tagName=='SELECT'){if(e.key=='Enter'){if(e.target.id=='pn')act.padd();if(S.v=='login')act.login()}return}
+  if(S.v!='play')return;
+  if(e.key=='ArrowRight')act.next();else if(e.key=='ArrowLeft')act.prev();
+  else if(e.key=='r'||e.key=='R')act.rev();
+  else if((e.key=='t'||e.key=='T'||e.key==' ')&&cur()&&cur().t>0){e.preventDefault();act.tog()}
+});
+r();
+</script>
+</body>
+</html>
